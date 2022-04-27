@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}
+Home Page
+{% endblock %}
+{% block content %}
+<nav class="navbar navbar-expand-sm navbar-custom navbar-dark">
+  <div class="container">
+    <a class="navbar-custom navbar-brand" href="/">Messenger</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/friends">Friends</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/logout">Logout</a>
+        </li>
+    </div>
+  </div>
+</nav>
+<br/>
+<br/>
+
+<div class="container" style="color: #eee;">
+  <div class="row">
+    <div class="col home-friends-box">
+      <h5>Friends</h5>
+      <div class="friends-container">
+        {% for i in range(0,friendsNames|length) %}
+            {% if i % 2 == 0 %}
+              <div id="ufb_{{i}}" onclick="changeActive(this.id)" class="user-friend-box light-box"><p>{{friendsNames[i]}}</p></div>
+            {% else %}
+              <div id="ufb_{{i}}" onclick="changeActive(this.id)" class="user-friend-box dark-box"><p>{{friendsNames[i]}}</p></div>
+            {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    <div class="col home-chat-box">
+      <h5>Chat</h5>
+      <div class="chat-container">
+        <!--
+        <div class="user-chat-box-sender">Hey there how are you</div>
+        <div class="user-chat-box-receiver">I'm good thanks for asking</div>
+        <div class="user-chat-box-receiver">I'm good thanks for asking</div>
+        <div class="user-chat-box-sender">Hey there how are you</div>
+        <div class="user-chat-box-receiver">I'm good thanks for asking</div>
+        <div class="user-chat-box-sender">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Auctor neque vitae tempus quam pellentesque. Semper auctor neque vitae tempus. Sit amet mattis vulputate enim nulla. Enim ut sem viverra aliquet eget sit amet tellus. Lobortis scelerisque fermentum dui faucibus in ornare. Ut lectus arcu bibendum at varius. Adipiscing tristique risus nec feugiat. Semper auctor neque vitae tempus quam pellentesque. Nulla aliquet porttitor lacus luctus. Enim facilisis gravida neque convallis a cras semper auctor neque. Morbi quis commodo odio aenean sed adipiscing.</div>
+        <div class="user-chat-box-sender">Hey there how are you</div>
+      -->
+      </div>
+      <div class="chat-input-container">
+        <form action="#" method="POST">
+          <input class="chat-input" type="text" placeholder="Enter message here" name="chatMsg" value="{{chatMsg if chatMsg}}"/>
+          <button type="submit" value="submit" class="send-button">Send</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+<script type="text/javascript" charset="utf-8">
+var friendsCodes = []
+{% for i in range(0,friendsCodes|length) %}
+  friendsCodes.push("{{friendsCodes[i]}}");
+{% endfor %}
+var active = 0
+var max_id_list = {{friendsNames|length}}
+
+function changeActive(clicked_id) {
+
+  var id_str = clicked_id
+  var id_str_splitted = id_str.split("ufb_");
+
+  active = id_str_splitted[1]
+
+  var i;
+  for(i=0; i < max_id_list; i++){
+    if(i == active){
+      if(i % 2 == 0){
+        $("#ufb_"+i).removeClass("light-box").addClass("light-box-active");
+        let active_user = friendsCodes[active]
+        socket.emit("get_active_user", {
+          active : active,
+          active_user : active_user
+        })
+      } else {
+        $("#ufb_"+i).removeClass("dark-box").addClass("dark-box-active");
+        let active_user = friendsCodes[active]
+        socket.emit("get_active_user", {
+          active : active,
+          active_user : active_user
+        })
+      }
+    } else {
+      if(i % 2 == 0){
+        $("#ufb_"+i).removeClass("light-box-active").addClass("light-box");
+      } else {
+        $("#ufb_"+i).removeClass("dark-box-active").addClass("dark-box");
+      }
+    }
+  }
+  return (friendsCodes[active])
+}
+
+var currentActiveUser = ""
+
+window.onload = function(){
+  currentActiveUser = changeActive("ufb_0") // Set default active user to 0
+}
+
+var socket = io.connect("http://" + document.domain + ":" + location.port);
+
+socket.on( "connect", function() {
+
+  socket.emit("connected");
+
+  var form = $( "form" ).on( "submit", function( e ) {
+    e.preventDefault()
+    let chatMessage = $( "input.chat-input" ).val()
+    let receiver = friendsCodes[active]
+    socket.emit( "send_msg", {
+      chatMessage : chatMessage,
+      receiver : receiver
+    } )
+    $( "input.chat-input" ).val( "" ).focus()
+  } )
+} )
+
+socket.on( "receive_post_sent_msg", function( msg ) {
+  $( "div.chat-container" ).append( "<div class='user-chat-box-sender'>"+msg.chatMessage+"</div>" );
+  $( "div.chat-container" ).scrollTop(9000);
+  socket.emit("update_other_user", {
+    currentActiveUser : currentActiveUser,
+    message : msg.chatMessage
+  })
+})
+
+socket.on("get_live_messages", function(json){
+  console.log("LIVE")
+  $( "div.chat-container" ).append( "<div class='user-chat-box-receiver'>"+json.message+"</div>" );
+  $( "div.chat-container" ).scrollTop(9000);
+})
+
+socket.on("display_msg", function( msg ){
+  console.log(msg)
+  $(".user-chat-box-sender").remove();
+  $(".user-chat-box-receiver").remove();
+
+  var i;
+  for(i=0; i<msg.length;i++){
+    if(msg[i][2] == "sender"){
+      $( "div.chat-container" ).append( "<div class='user-chat-box-sender'>"+msg[i][1]+"</div>" );
+      $( "div.chat-container" ).scrollTop(9000);
+    } else {
+      $( "div.chat-container" ).append( "<div class='user-chat-box-receiver'>"+msg[i][1]+"</div>" );
+      $( "div.chat-container" ).scrollTop(9000);
+    }
+  }
+})
+
+</script>
+
+{% endblock %}

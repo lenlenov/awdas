@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}
+Friends Page
+{% endblock %}
+{% block content %}
+
+<nav class="navbar navbar-expand-sm navbar-custom navbar-dark">
+  <div class="container">
+    <a class="navbar-custom navbar-brand" href="/">Messenger</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/friends">Friends</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/logout">Logout</a>
+        </li>
+    </div>
+  </div>
+</nav>
+<br/>
+<br/>
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <table class="table">
+        <thead class="thead-light">
+          <tr>
+            <th scope="col">Names</th>
+            <th scope="col" style="text-align:center;">Friend Code</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i,j in friendsNames|zip(friendsCodes) %}
+            <tr>
+              <th scope="row">{{i}}</th>
+              <td scope="row" style="text-align:center;">{{j}}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="col friend-option">
+      <br/>
+      <h4>{{username}}</h4>
+      <p>Your friend code: {{friendcode}}</p>
+      <br/>
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for msg in messages %}
+            <p style="color:red;">{{msg}}</p>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      <form action="#" method="POST">
+        <div class="form-group">
+          <label>Add friend:</label>
+          <input type="text" class="form-control" placeholder="Enter code" name="friendAddCode" value="{{friendAddCode if friendAddCode}}">
+        </div>
+        <button type="submit" style="float:right;"class="btn btn-primary" value="submit">Submit</button>
+        <small class="form-text text-muted">Enter your friends code here to add them.</small>
+      </form>
+      <br/>
+      <br/>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
